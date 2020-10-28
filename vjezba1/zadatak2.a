@@ -1,0 +1,73 @@
+    MOVE 10000, R7   ; = stack
+    MOVE DATA, R4    ; = in
+    MOVE 1000, R5    ; = out
+
+    MOVE 8000, R6    ; = end cond const
+    SHL R6, 10, R6
+    OR R6, 8000, R6
+
+START
+    LOAD R1, (R4)    ; check end condition
+    CMP R1, R6
+    JP_NE PROCESS
+    HALT
+
+DATA
+    DH %H 4321, %H 432C   ; data
+    DH %H 00FF, %H 7DBA
+    DH %H 548B, %H B78B
+    DH %H BADA, %H DEDA
+    DH %H 7C8A, %H 1B39
+    DH %H 8000, %H 8000   ; end
+
+PROCESS
+    LOADH R1, (R4)      ; load next
+    LOADH R2, (R4 + 2)
+    ADD R4, 4, R4
+
+    SHL R1, 10, R1      ; sign expand
+    SHL R2, 10, R2
+    ASHR R1, 10, R1
+    ASHR R2, 10, R2
+
+    PUSH R1         ; zasto nismo jednostavno predavali argumente preko registara?
+    PUSH R2         ; standardno je na velikoj vecini platformi, a i prva stvar koju
+    CALL COMP       ; napravimo u potprogramu comp je ucitamo sa stoga opet na prve registre...
+    ADD R7, 8, R7   ; prevent stack overflow - silently pop arguments
+
+    STORE R0, (R5)  ; store result
+    ADD R5, 4, R5
+    JP START
+
+COMP
+    PUSH R1
+    PUSH R2
+    PUSH R3
+
+    LOAD R1, (R7 + 10)  ; load args from stack
+    LOAD R2, (R7 + 14)
+
+    MOVE 0, R0          ; = result
+    XOR R1, R2, R1      ; = xor, bits will be 0 where equal and 1 where different
+    MOVE 4, R2          ; = cnt - 4 bytes to process
+
+LOOP
+    AND R1, 0FF, R3   ; check if bytes are equal
+    JP_Z EQUAL
+    
+    OR R0, 0BB, R0    ; neq
+    JP NEXT
+
+EQUAL
+    OR R0, 0AA, R0    ; eq
+
+NEXT
+    ROTR R0, 8, R0    ; rotate to next byte
+    SHR R1, 8, R1
+    SUB R2, 1, R2
+    JP_NZ LOOP
+
+    POP R3   ; calculated each byte, return
+    POP R2
+    POP R1
+    RET

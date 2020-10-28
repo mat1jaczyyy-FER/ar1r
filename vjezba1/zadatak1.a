@@ -1,0 +1,39 @@
+    MOVE 500, R4  ; = in
+    MOVE 1000, R5 ; = out
+    LOAD R6, (R4) ; = count
+    
+    MOVE 80, R1   ; = const for negative number
+
+LOOP
+    ADD R4, 4, R4
+    LOAD R0, (R4) ; = current
+
+    CMP R0, %H FFFFFF81
+    JP_UGT NEG
+
+    CMP R0, 80
+    JP_ULT NEXT
+
+    MOVE %H FF, R0
+    JP NEXT
+
+NEG
+    SUB R1, R0, R0
+
+NEXT
+    STOREB R0, (R5)
+    ADD R5, 1, R5
+
+    SUB R6, 1, R6
+    JP_NZ LOOP
+
+    HALT
+
+ORG 500
+DW %H 00000006 ; count
+DW %H FFFFFFFF ; data
+DW %H 00000002
+DW %H 00000123
+DW %H 00000025
+DW %H FFFFFD44
+DW %H FFFFFFDF
