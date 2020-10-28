@@ -1,2 +1,5 @@
 # Auto detect text files and perform LF normalization
 * text eol=lf
+
+# Reclassify `.a` files as Assembly:
+*.a linguist-language=Assembly
