@@ -1,0 +1,89 @@
+TEXT EQU    000000400
+
+    ORG 0
+    MOV R13, #81<8
+    B MAIN
+
+RTC     DW 0FFFFFE00
+LCD     DW 0FFFFFF00
+INDEX   DW 0
+
+    ORG 18
+    STMFD R13!, {R0, R1, R14}
+
+    LDR R0, RTC
+    STR R1, [R0, #08]
+    MOV R1, #0
+    STR R1, [R0, #0C]
+
+    BL PRINT_NEXT
+
+    LDMFD R13!, {R0, R1, R14}
+    SUBS PC, R14, #4
+
+MAIN
+    LDR R0, RTC
+    MOV R1, #1<8
+    STR R1, [R0, #04]
+    MOV R1, #1
+    STR R1, [R0, #10]
+
+    BL PRINT_NEXT
+
+    MRS R0, CPSR
+    BIC R0, R0, #80
+    MSR CPSR_c, R0
+
+HANG
+    B HANG
+
+PRINT_NEXT
+    STMFD R13!, {R0, R1, R2, R14}
+    LDR R2, LCD
+
+    MOV R0, #0D
+    BL LCDWR
+
+    MOV R0, #3E
+    BL LCDWR
+    BL LCDWR
+    BL LCDWR
+
+    LDR R1, INDEX
+    LDRB R0, [R1, #DATA]
+
+    CMP R0, #0
+    MOVEQ R1, #0
+    LDREQB R0, [R1, #DATA]
+
+    ADD R1, R1, #1
+    STR R1, INDEX
+    
+    BL LCDWR
+
+    MOV R0, #3C
+    BL LCDWR
+    BL LCDWR
+    BL LCDWR
+
+    MOV R0, #0A
+    BL LCDWR
+
+    LDMFD R13!, {R0, R1, R2, R14}
+    MOV PC, LR
+
+LCDWR
+    AND R0, R0, #7F
+    STRB R0, [R2, #4]
+
+    ORR R0, R0, #80
+    STRB R0, [R2, #4]
+
+    AND R0, R0, #7F
+    STRB R0, [R2, #4]
+
+    MOV PC, LR
+
+    ORG 400
+DATA
+    DB 49, 6E, 74, 65, 72, 6E, 61, 74, 69, 6F, 6E, 61, 6C, 69, 73, 61, 74, 69, 6F, 6E, 0
