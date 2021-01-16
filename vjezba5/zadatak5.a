@@ -1,0 +1,91 @@
+INPUT    EQU 100
+OUTPUT   EQU 400
+    
+    ORG 0
+    MOV R13, #81<8
+    B MAIN
+
+    ORG 100
+    DW %H 00000000
+    DW %H 00000003
+    DW %H 00000006
+    DW %H FFFFFFFF
+    DW %H FFFFFFFA
+    DW %H 80000000
+
+    ORG 700
+MAIN
+    MOV R2, #0
+
+LOOP
+    LDR R1, [R2, #INPUT]
+    CMP R1, #80<24
+    SWIEQ 123456
+
+    STMFD R13!, {R1}
+    BL KUB
+    ADD R13, R13, #04
+    
+    SUB R0, R0, #1
+    ADD R1, R1, R1
+
+    STMFD R13!, {R0, R1}
+    BL DIV
+    ADD R13, R13, #08
+
+    STR R0, [R2, #OUTPUT]
+    ADD R2, R2, #4
+    B LOOP
+
+KUB
+    STMFD R13!, {R1}
+
+    ADD R1, R13, #04
+    LDMFD R1, {R0}
+
+    MUL R1, R0, R0
+    MUL R0, R0, R1
+
+    LDMFD R13!, {R1}
+    MOV PC, LR
+
+DIV
+    STMFD R13!, {R1, R2, R3, R4}
+
+    ADD R1, R13, #10
+    LDMFD R1, {R0, R1}
+
+    CMP R1, #0
+    MOVEQ R0, #0
+    BEQ DIV_RET
+
+DIV_BEGIN
+    MOV R4, #0
+    SUB R4, R4, #1
+    
+    MOVS R2, R0, LSR #31
+    MULNE R0, R0, R4  ; if R0 sign bit == 1, flip sign
+
+    MOVS R3, R1, LSR #31
+    MULNE R1, R1, R4
+
+    EOR R3, R2, R3
+    MOV R2, #0
+
+DIV_LOOP
+    CMP R0, R1
+    BLT DIV_FINISH
+
+    SUB R0, R0, R1
+    ADD R2, R2, #1
+    B DIV_LOOP
+
+DIV_FINISH
+    MOV R0, R2
+
+    CMP R3, #0
+    MULNE R0, R0, R4
+
+DIV_RET
+    LDMFD R13!, {R1, R2, R3, R4}
+    MOV PC, LR
