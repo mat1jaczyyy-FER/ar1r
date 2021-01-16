@@ -76,7 +76,11 @@ INT_RET
     RETI
 
 OBRADI
-    LOAD R3, (SP + 4)
+    PUSH R3
+
+    LOAD R3, (SP + 8)
     MOVE 1, R0
     SHL R0, R3, R0
+    
+    POP R3
     RET
